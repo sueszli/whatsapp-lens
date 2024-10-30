@@ -12,13 +12,6 @@ from utils import get_current_dir
 
 
 def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
-    """
-    parse a whatsapp chat log into a csv file
-
-    :param inputpath: path to the whatsapp chat log
-    :param outputpath: path to the output csv file
-    """
-
     print(f"processing {inputpath}")
     writer = csv.writer(open(outputpath, "w", newline="", encoding="utf-8"))
     writer.writerow(["timestamp", "author", "message"])
