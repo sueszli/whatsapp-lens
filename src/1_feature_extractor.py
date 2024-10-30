@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from langdetect import detect
 from tqdm import tqdm
@@ -74,21 +75,51 @@ def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
     df = df.copy()
 
     total_messages = len(df)
-    texting_duration_days = (df["datetime"].max() - df["datetime"].min()).days + 1
-
     author_messages = df[df["author"] == authorname]
     partner_messages = df[df["author"] != authorname]
+
+    conversation_threshold_minutes = 60 * 2  # after 2 hours, the conversation has ended
+    df["time_diff"] = df["datetime"].diff().dt.total_seconds() / 60  # time difference in minutes
+    df["new_conversation"] = df["time_diff"] > conversation_threshold_minutes  # assign new conversation
+    df["conversation_id"] = df["new_conversation"].cumsum()  # assign conversation id
+
+    def calculate_response_times(messages1, messages2):
+        responses = []
+        for conv_id in df["conversation_id"].unique():
+            conv_msgs = df[df["conversation_id"] == conv_id].copy()
+            for i in range(len(conv_msgs) - 1):
+                if conv_msgs.iloc[i]["author"] in messages1["author"].values and conv_msgs.iloc[i + 1]["author"] in messages2["author"].values:
+                    time_diff = (conv_msgs.iloc[i + 1]["datetime"] - conv_msgs.iloc[i]["datetime"]).total_seconds() / 60
+                    if time_diff < conversation_threshold_minutes:
+                        responses.append(time_diff)
+        return np.mean(responses) if responses else 0
+
     return {
         "total_messages": total_messages,
-        "texting_duration_days": texting_duration_days,
-        "author_message_ratio": float(len(author_messages) / total_messages),
-        "partner_message_ratio": float(len(partner_messages) / total_messages),
-        "author_avg_word_count": float(author_messages["message"].str.split().apply(len).mean()),
-        "partner_avg_word_count": float(partner_messages["message"].str.split().apply(len).mean()),
+        # total days
+        "texting_duration_days": (df["datetime"].max() - df["datetime"].min()).days + 1,
+        # total message ratio
+        "author_message_ratio": len(author_messages) / total_messages,
+        "partner_message_ratio": len(partner_messages) / total_messages,
+        # avg words per message
+        "author_avg_word_count": author_messages["message"].str.split().str.len().mean(),
+        "partner_avg_word_count": partner_messages["message"].str.split().str.len().mean(),
+        # media count
         "author_media_count": int(author_messages["message"].str.count("<MEDIA OMITTED>").sum()),
         "partner_media_count": int(partner_messages["message"].str.count("<MEDIA OMITTED>").sum()),
+        # emoji count
         "author_avg_emoji_count": float(author_messages["message"].str.count(r"[\U0001f600-\U0001f650]").mean()),
         "partner_avg_emoji_count": float(partner_messages["message"].str.count(r"[\U0001f600-\U0001f650]").mean()),
+        # links count
+        "author_url_count": int(author_messages["message"].str.count(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+").sum()),
+        "partner_url_count": int(partner_messages["message"].str.count(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+").sum()),
+        # message freq
+        "author_message_freq_s": author_messages["datetime"].diff().mean().total_seconds(),
+        "partner_message_freq_s": partner_messages["datetime"].diff().mean().total_seconds(),
+        # response freq
+        "total_conversations": df["conversation_id"].nunique(),
+        "author_response_time_s": calculate_response_times(partner_messages, author_messages),
+        "partner_response_time_s": calculate_response_times(author_messages, partner_messages),
     }
 
 
@@ -117,7 +148,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int =
     placeholder = "<MEDIA OMITTED>"
     df = df[~df["message"].str.contains(placeholder)]
 
-    def get_monthly_user_sentiments(df: pd.DataFrame, authorname: str, sample_size: int = 100) -> list[float]:
+    def get_monthly_user_sentiments(df: pd.DataFrame, authorname: str, sample_size: int = 1_000) -> list[float]:
         from transformers import pipeline
 
         device = get_device(disable_mps=False)
@@ -128,7 +159,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int =
         # cluster by month
         dfm = df.copy()
         dfm = dfm[dfm["author"] == authorname]
-        dfm = dfm.set_index("datetime").resample("M")
+        dfm = dfm.set_index("datetime").resample("ME")
 
         for month, group in dfm:
             # get sampled average sentiment
@@ -152,27 +183,23 @@ if __name__ == "__main__":
         inputpath=get_current_dir().parent / "data" / "robustness",
     )
 
-    # for path in glob.glob(str(args.inputpath / "*.csv")):
-    path = glob.glob(str(args.inputpath / "*.csv"))[0]
+    for path in glob.glob(str(args.inputpath / "*.csv")):
+        path = glob.glob(str(args.inputpath / "*.csv"))[0]
 
-    df = pd.read_csv(path)
-    df = preprocess(df)
-    author_name = get_author_name(df, path)
+        df = pd.read_csv(path)
+        df = preprocess(df)
+        author_name = get_author_name(df, path)
 
-    results = {
-        "conversation_language": get_language(df),
-        "partner_name": df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1],
-        **get_monthly_sentiments(df, author_name),
-        **get_gender_stats(df, author_name),
-        **get_freq_stats(df, author_name),
-    }
-    print(json.dumps(results, indent=4, ensure_ascii=False))
+        results = {
+            "conversation_language": get_language(df),
+            "author_name": author_name,
+            "partner_name": df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1],
+            **get_freq_stats(df, author_name),
+            **get_monthly_sentiments(df, author_name),
+            **get_gender_stats(df, author_name),
+        }
+        print(json.dumps(results, indent=4, ensure_ascii=False))
 
-    # get topics metadata
+        # get topics metadata
 
-    # get relationship metadata with latents
-
-    # maybe generate data using llms for training
-
-    # for line in df["message"]:
-    #     print(line)
+        # full conversation latent represenation

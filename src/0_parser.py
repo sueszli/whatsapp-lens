@@ -46,12 +46,14 @@ def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
 
 
 def validate_csv(path: Path) -> None:
-    with open(path, "r", encoding="utf-8") as csvfile:
-        reader = csv.reader(csvfile)  # throws if invalid
-        header = next(reader)
-        assert header == ["timestamp", "author", "message"]
-        for row in reader:
-            assert len(row) == 3
+    content_iter = csv.reader(open(path, "r", encoding="utf-8"))
+    header = next(content_iter)
+    assert header == ["timestamp", "author", "message"]
+
+    prev_timestamp = None
+    for row in content_iter:
+        assert len(row) == 3  # three cols
+        assert (not prev_timestamp) or (prev_timestamp < row[0])  # increasing timestamps
 
 
 if __name__ == "__main__":
