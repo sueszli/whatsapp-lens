@@ -20,6 +20,8 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df["author"] != "server"]
     df = df[~df["message"].str.contains("New messages will disappear from this chat 24 hours after they're sent, except when kept. Tap to change.")]
     df = df[~df["message"].str.contains("<Media omitted>")]  # media
+    df = df[~df["message"].str.contains("(file attached)")]  # media
+    df = df[~df["message"].str.contains("location: https://maps.google.com/?q")]  # media
     poll_mask = df["message"].str.contains("|".join(["POLL:", "OPTION:", "votes"]), case=False)  # polls
     df = df[~poll_mask]
 
@@ -54,6 +56,7 @@ if __name__ == "__main__":
     df = preprocess(df)
 
     lang = get_language(df)
+    print(lang)
 
     # get frequency metadata
 
