@@ -43,10 +43,22 @@ def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
         writer.writerow([current_message["timestamp"], current_message["author"], current_message["message"]])
 
 
+def validate_csv(inputpath: Path) -> None:
+    with open(inputpath, "r", encoding="utf-8") as csvfile:
+        reader = csv.reader(csvfile)  # throws if invalid
+        header = next(reader)
+        assert header == ["timestamp", "author", "message"]
+        for row in reader:
+            assert len(row) == 3
+
+
 if __name__ == "__main__":
     args = SimpleNamespace(
         inputpath=get_current_dir().parent / "data" / "robustness",
     )
-    for inputpath in glob.glob(str(args.inputpath / "*.txt")):
-        outputpath = args.inputpath / f"{Path(inputpath).stem}.csv"
-        parse_whatsapp_chat(Path(inputpath), outputpath)
+
+    for path in glob.glob(str(args.inputpath / "*.txt")):
+        outputpath = args.inputpath / f"{Path(path).stem}.csv"
+        parse_whatsapp_chat(Path(path), outputpath)
+
+        validate_csv(outputpath)
