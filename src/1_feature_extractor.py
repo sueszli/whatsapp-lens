@@ -207,8 +207,6 @@ def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
         # vocabulary richness
         "author_vocabulary_size": len(set(author_messages["message"].str.split().explode())),
         "partner_vocabulary_size": len(set(partner_messages["message"].str.split().explode())),
-        #
-        #
         # time between each message
         "total_conversations": df["conversation_id"].nunique(),
         "total_duration_days": (df["datetime"].max() - df["datetime"].min()).days + 1,
@@ -220,8 +218,6 @@ def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
         # active time of day
         "author_avg_active_time": author_messages["datetime"].dt.hour.mean(),
         "partner_avg_active": partner_messages["datetime"].dt.hour.mean(),
-        #
-        #
         # conversation inits
         "author_conversation_initiations": int(sum(df[df["new_conversation"] == True]["author"].value_counts().to_dict().values()) - int(df[df["new_conversation"] == True]["author"].value_counts().to_dict().get(authorname, 0))),
         "partner_conversation_initiations": int(sum(df[df["new_conversation"] == True]["author"].value_counts().to_dict().values()) - int(df[df["new_conversation"] == True]["author"].value_counts().to_dict().get(authorname, 0))),
