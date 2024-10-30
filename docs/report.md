@@ -58,6 +58,26 @@ The data preprocessing will encompass the standardization of the data, including
 
 Given the explorative nature of the project, the extent to which the optional tasks will be implemented will depend on the time and complexity constraints of the project. However, the deliverables will include a well-documented codebase, a detailed report as well as a presentation of the findings in less than 100 hours of work.
 
+
+
+<!-- 
+
+
+deliverables:
+
+- analytics pipeline
+- generated dataset: the generated dataset has to be synthetic (with X number of conversations) and completely independent of the rest.
+
+- analysis on generated dataset / private dataset
+
+- website deployment of some sort
+- report
+- video recording / presentation
+
+-->
+
+
+
 [^marketshare1]: Shan, S. The battle between social giants: WeChat and WhatsApp’s influence in digital marketing.
 [^marketshare2]: WhatsApp-Website. http://blog.whatsapp.com/. Accessed 30 Oct 2024.
 [^marketshare3]: Montag, C., Błaszkiewicz, K., Sariyska, R., Lachmann, B., Andone, I., Trendafilov, B. & Markowetz, A. (2015). Smartphone usage in the 21st century: who is active on WhatsApp?. BMC research notes, 8, 1-6.
