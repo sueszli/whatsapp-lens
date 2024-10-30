@@ -1,0 +1,11 @@
+Sehr geehrter Herr Prof. Pacha,
+
+Leider habe den Aufwand des ML-Security Projektes überschätzt [^1].
+
+whatsapp lens: whatsapp sentiment and relationship latent analysis, timeseries analysis, deployment as local python app → could speedrun whole course on a weekend
+
+
+
+
+[^1]: Im Detail; Ich habe das Projekt größtenteils umgesetzt aber
+
