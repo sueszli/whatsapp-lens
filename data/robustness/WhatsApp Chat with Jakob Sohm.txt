@@ -1,5 +1,5 @@
 10/27/24, 18:38 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more.
-10/27/24, 18:38 - Yahya Jabary: hi jakob! wie war dein sonntag soweit?
+10/27/24, 18:38 - Yahya Jabary: hi jakob! wie war dein sonntag soweit? das ist ein kleiner künstlich generierter chat mit dir um alle feature von whatsapp zu testen
 10/27/24, 18:38 - Jakob Sohm: gut ich hab an meinen grafikdesign projekten gearbeitet, du so?
 10/27/24, 18:39 - Yahya Jabary: ich schreibe jetzt mit dir in einem neuen chat um ein datenset für meine hausaufgaben zu generieren lol
 
@@ -48,7 +48,7 @@ OPTION: test1 (0 votes)
 10/27/24, 18:46 - Yahya Jabary: stell dir vor du bist ein machine learning model
 10/27/24, 18:46 - Yahya Jabary: und liest ein chat daruber wie leute planen was sie dir zeigen
 10/27/24, 18:46 - Yahya Jabary: <Media omitted>
-10/27/24, 18:46 - Yahya Jabary: location: https://maps.google.com/?q=48.2034684,16.2480727
+10/27/24, 18:46 - Yahya Jabary: location: https://maps.google.com/?q=48.2034684,48.2485727
 10/27/24, 18:47 - Yahya Jabary: <Media omitted>
 10/27/24, 18:47 - Yahya Jabary: <Media omitted>
 10/27/24, 18:47 - Jakob Sohm: aber wirds nicht das ergebnis skewen wenn du jetzt lauter junk schickst zum testen?

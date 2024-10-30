@@ -61,5 +61,7 @@ if __name__ == "__main__":
 
     # get relationship metadata with latents
 
+    # maybe generate data using llms for training
+
     # for line in df["message"]:
     #     print(line)
