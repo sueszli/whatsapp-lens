@@ -1,4 +1,5 @@
 import csv
+import glob
 import re
 from datetime import datetime
 from pathlib import Path
@@ -9,13 +10,15 @@ from tqdm import tqdm
 
 from utils import get_current_dir
 
-args = SimpleNamespace(
-    inputpath=get_current_dir().parent / "data" / "chat.txt",
-    outputpath=get_current_dir().parent / "data" / "chat.csv",
-)
-
 
 def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
+    """
+    parse a whatsapp chat log into a csv file
+
+    :param inputpath: path to the whatsapp chat log
+    :param outputpath: path to the output csv file
+    """
+
     print(f"processing {inputpath}")
     writer = csv.writer(open(outputpath, "w", newline="", encoding="utf-8"))
     writer.writerow(["timestamp", "author", "message"])
@@ -47,4 +50,10 @@ def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
         writer.writerow([current_message["timestamp"], current_message["author"], current_message["message"]])
 
 
-messages = parse_whatsapp_chat(args.inputpath, args.outputpath)
+if __name__ == "__main__":
+    args = SimpleNamespace(
+        inputpath=get_current_dir().parent / "data" / "robustness",
+    )
+    for inputpath in glob.glob(str(args.inputpath / "*.txt")):
+        outputpath = args.inputpath / f"{Path(inputpath).stem}.csv"
+        parse_whatsapp_chat(Path(inputpath), outputpath)
