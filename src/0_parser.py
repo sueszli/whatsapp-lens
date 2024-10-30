@@ -8,11 +8,12 @@ from typing import Dict, Optional
 
 from tqdm import tqdm
 
-from utils import get_current_dir
+from utils import get_current_dir, set_seed
+
+set_seed()
 
 
 def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
-    print(f"processing {inputpath}")
     writer = csv.writer(open(outputpath, "w", newline="", encoding="utf-8"))
     writer.writerow(["timestamp", "author", "message"])
 
@@ -24,7 +25,8 @@ def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
             if not line:  # skip empty
                 continue
 
-            match = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2})\s-\s(?:([^:]+):\s)?(.+)", line)
+            pattern = r"(\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2})\s-\s(?:([^:]+):\s)?(.+)"
+            match = re.match(pattern, line)
             if match:
                 if current_message:
                     writer.writerow([current_message["timestamp"], current_message["author"], current_message["message"]])
@@ -43,8 +45,8 @@ def parse_whatsapp_chat(inputpath: Path, outputpath: Path) -> None:
         writer.writerow([current_message["timestamp"], current_message["author"], current_message["message"]])
 
 
-def validate_csv(inputpath: Path) -> None:
-    with open(inputpath, "r", encoding="utf-8") as csvfile:
+def validate_csv(path: Path) -> None:
+    with open(path, "r", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)  # throws if invalid
         header = next(reader)
         assert header == ["timestamp", "author", "message"]
@@ -57,7 +59,9 @@ if __name__ == "__main__":
         inputpath=get_current_dir().parent / "data" / "robustness",
     )
 
+    # parse all txt files, dump as csv in same dir
     for path in glob.glob(str(args.inputpath / "*.txt")):
+        print(f"processing: {Path(path).name}")
         outputpath = args.inputpath / f"{Path(path).stem}.csv"
         parse_whatsapp_chat(Path(path), outputpath)
 
