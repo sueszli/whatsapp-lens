@@ -65,14 +65,13 @@ Given the explorative nature of the project, the extent to which the optional ta
 
 deliverables:
 
-- analytics pipeline
-- generated dataset: the generated dataset has to be synthetic (with X number of conversations) and completely independent of the rest.
-
-- analysis on generated dataset / private dataset
-
-- website deployment of some sort
+- data:
+    - robustness testing dataset
+    - synthetic data generation tool
+- analytics
+- visualization / deployment
 - report
-- video recording / presentation
+- video presentation on youtube
 
 -->
 
