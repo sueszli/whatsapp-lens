@@ -42,6 +42,13 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def drop_media(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    placeholder = "<MEDIA OMITTED>"
+    df = df[~df["message"].str.contains(placeholder)]
+    return df
+
+
 def get_author_name(df: pd.DataFrame, path: Path) -> str:
     df = df.copy()
 
@@ -75,8 +82,7 @@ def get_gender_stats(df: pd.DataFrame, authorname: str) -> dict:
     def get_gender(name: str) -> Optional[str]:
         from transformers import pipeline
 
-        device = get_device(disable_mps=False)
-        sex_classifier = pipeline("text-classification", model="padmajabfrl/Gender-Classification", device=device, model_kwargs={"cache_dir": weightspath})
+        sex_classifier = pipeline("text-classification", model="padmajabfrl/Gender-Classification", device=get_device(disable_mps=False), model_kwargs={"cache_dir": weightspath})
         cls = sex_classifier(name)[0]["label"]
         if cls not in ["Male", "Female"]:
             cls = None
@@ -91,17 +97,12 @@ def get_gender_stats(df: pd.DataFrame, authorname: str) -> dict:
 
 def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) -> dict:
     df = df.copy()
-
-    # drop media messages
-    placeholder = "<MEDIA OMITTED>"
-    df = df[~df["message"].str.contains(placeholder)]
+    df = drop_media(df)
 
     def get_monthly_user_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) -> list[float]:
         from transformers import pipeline
 
-        # individual emotions classifier not available as multilingual model, so we can just do sentiment
-        device = get_device(disable_mps=False)
-        sentiment_classifier = pipeline("sentiment-analysis", device=device, model="lxyuan/distilbert-base-multilingual-cased-sentiments-student", model_kwargs={"cache_dir": weightspath})
+        sentiment_classifier = pipeline("sentiment-analysis", device=get_device(disable_mps=False), model="lxyuan/distilbert-base-multilingual-cased-sentiments-student", model_kwargs={"cache_dir": weightspath})
 
         monthly_sentiments = []
 
@@ -129,16 +130,12 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
 
 def get_monthly_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) -> dict:
     df = df.copy()
-
-    # drop media messages
-    placeholder = "<MEDIA OMITTED>"
-    df = df[~df["message"].str.contains(placeholder)]
+    df = drop_media(df)
 
     def get_monthly_user_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) -> list[float]:
         from transformers import pipeline
 
-        device = get_device(disable_mps=False)
-        toxicity_classifier = pipeline("text-classification", device=device, model="citizenlab/distilbert-base-multilingual-cased-toxicity", model_kwargs={"cache_dir": weightspath})
+        toxicity_classifier = pipeline("text-classification", device=get_device(disable_mps=False), model="citizenlab/distilbert-base-multilingual-cased-toxicity", model_kwargs={"cache_dir": weightspath})
 
         monthly_toxicity = []
 
@@ -162,6 +159,34 @@ def get_monthly_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) ->
         "author_monthly_toxicity": get_monthly_user_toxicity(df, authorname, sample_size),
         "partner_monthly_toxicity": get_monthly_user_toxicity(df, partnername, sample_size),
     }
+
+
+def get_topic_diversity_score(df: pd.DataFrame) -> float:
+    from bertopic import BERTopic
+    from sentence_transformers import SentenceTransformer
+    from sklearn.feature_extraction.text import CountVectorizer
+
+    df = df.copy()
+    df = drop_media(df)
+    messages = df["message"].tolist()
+
+    embedding_model = SentenceTransformer("distiluse-base-multilingual-cased-v2", device=get_device(disable_mps=False), cache_folder=weightspath)
+    vectorizer = CountVectorizer(
+        min_df=1,  # minimum document frequency
+        max_df=1.0,  # maximum document frequency
+        ngram_range=(1, 2),  # allow single words and bigrams
+    )
+    topic_model = BERTopic(
+        embedding_model=embedding_model,
+        vectorizer_model=vectorizer,
+        min_topic_size=3,  # minimum number of messages in a topic
+        nr_topics="auto",
+        language="multilingual",
+    )
+    topics, probs = topic_model.fit_transform(messages)  # fit
+    topic_info = topic_model.get_topic_info()
+    topic_diversity = len(topic_info[topic_info["Topic"] != -1]) / len(messages)
+    return topic_diversity
 
 
 def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
@@ -227,7 +252,10 @@ def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
 if __name__ == "__main__":
     args = SimpleNamespace(
         inputpath=get_current_dir().parent / "data" / "robustness",
+        outputpath=get_current_dir().parent / "data" / "results",
     )
+    os.makedirs(args.outputpath, exist_ok=True)
+    os.makedirs(weightspath, exist_ok=True)
 
     for path in glob.glob(str(args.inputpath / "*.csv")):
         path = glob.glob(str(args.inputpath / "*.csv"))[0]
@@ -243,9 +271,11 @@ if __name__ == "__main__":
             **get_monthly_sentiments(df, author_name, sample_size=1_000),
             **get_monthly_toxicity(df, author_name, sample_size=1_000),
             **get_gender_stats(df, author_name),
+            "topic_diversity": get_topic_diversity_score(df),
             **get_freq_stats(df, author_name),
         }
         print(json.dumps(results, indent=4, ensure_ascii=False))
 
-        # topics (lda, bert)
-        # full latent (full conversation latent represenation)
+        df = df.copy()
+        df = drop_media(df)
+        messages = df["message"].tolist()

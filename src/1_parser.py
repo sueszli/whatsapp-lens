@@ -1,5 +1,6 @@
 import csv
 import glob
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -60,8 +61,8 @@ if __name__ == "__main__":
     args = SimpleNamespace(
         inputpath=get_current_dir().parent / "data" / "robustness",
     )
+    os.makedirs(args.inputpath, exist_ok=True)
 
-    # parse all txt files, dump as csv in same dir
     for path in glob.glob(str(args.inputpath / "*.txt")):
         print(f"processing: {Path(path).name}")
         outputpath = args.inputpath / f"{Path(path).stem}.csv"
