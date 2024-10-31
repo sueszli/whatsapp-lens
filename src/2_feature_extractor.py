@@ -275,7 +275,3 @@ if __name__ == "__main__":
             **get_freq_stats(df, author_name),
         }
         print(json.dumps(results, indent=4, ensure_ascii=False))
-
-        df = df.copy()
-        df = drop_media(df)
-        messages = df["message"].tolist()
