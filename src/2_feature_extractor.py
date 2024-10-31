@@ -290,12 +290,12 @@ if __name__ == "__main__":
             "conversation_language": get_language(df),
             "author_name": author_name,
             "partner_name": df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1],
-            **get_monthly_sentiments(df, author_name, sample_size=1_000),
-            **get_monthly_toxicity(df, author_name, sample_size=1_000),
-            **get_gender_stats(df, author_name),
-            "topic_diversity": get_topic_diversity_score(df),
-            **get_freq_stats(df, author_name),
-            "embeddings": get_embedding(df),
+            # **get_monthly_sentiments(df, author_name, sample_size=1_000),
+            # **get_monthly_toxicity(df, author_name, sample_size=1_000),
+            # **get_gender_stats(df, author_name),
+            # "topic_diversity": get_topic_diversity_score(df),
+            # **get_freq_stats(df, author_name),
+            # "embeddings": get_embedding(df),
         }
 
         with open(args.outputpath / f"results.csv", "a") as f:
