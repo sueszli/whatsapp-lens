@@ -2,8 +2,7 @@
 # then make interactive visualizations for github pages
 
 from types import SimpleNamespace
-from pathlib import Path
-import os
+
 from utils import get_current_dir
 
 if __name__ == "__main__":

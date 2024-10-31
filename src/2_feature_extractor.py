@@ -294,12 +294,12 @@ if __name__ == "__main__":
             "conversation_language": get_language(df),
             "author_name": author_name,
             "partner_name": partnername,
-            # **get_monthly_sentiments(df, author_name, sample_size=1_000),
-            # **get_monthly_toxicity(df, author_name, sample_size=1_000),
-            # **get_gender_stats(df, author_name),
-            # "topic_diversity": get_topic_diversity_score(df),
-            # **get_freq_stats(df, author_name),
-            # "embeddings": get_embedding(df),
+            **get_monthly_sentiments(df, author_name, sample_size=1_000),
+            **get_monthly_toxicity(df, author_name, sample_size=1_000),
+            **get_gender_stats(df, author_name),
+            "topic_diversity": get_topic_diversity_score(df),
+            **get_freq_stats(df, author_name),
+            "embeddings": get_embedding(df),
         }
 
         outputfile = args.outputpath / f"{partnername}.csv"
