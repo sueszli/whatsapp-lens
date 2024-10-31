@@ -129,7 +129,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
                 if len(message) > max_length: # truncate if too long
                     message = message[:max_length]
                 sentiments.append(sentiment_classifier(message)[0]["score"])
-            avg = sum(sentiments) / len(sentiments)
+            avg = (sum(sentiments) / len(sentiments)) if (sentiments and len(sentiments) > 0) else 0
             monthly_sentiments.append(avg)
         return monthly_sentiments
 
@@ -163,7 +163,7 @@ def get_monthly_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) ->
             sampled_messages = group["message"].sample(n=sample_size_adjusted).tolist()
 
             toxicities = [toxicity_classifier(message)[0]["label"] == "TOXIC" for message in sampled_messages]
-            avg = sum(toxicities) / len(toxicities)
+            avg = sum(toxicities) / len(toxicities) if (toxicities and len(toxicities) > 0) else 0
             monthly_toxicity.append(avg)
         return monthly_toxicity
 
@@ -284,12 +284,20 @@ if __name__ == "__main__":
     os.makedirs(args.outputpath, exist_ok=True)
     os.makedirs(weightspath, exist_ok=True)
 
+
     for path in tqdm(glob.glob(str(args.inputpath / "*.csv"))):
         print("processing:", Path(path).name, " - length:", len(pd.read_csv(path)))
         df = pd.read_csv(path)
         df = preprocess(df)
         author_name = get_author_name(df, path)
         partnername = df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1]
+
+        # caching
+        outputfile = args.outputpath / f"{partnername}.csv"
+        if outputfile.exists():
+            print("file exists, skipping")
+            continue
+
         results = {
             "conversation_language": get_language(df),
             "author_name": author_name,
@@ -302,9 +310,8 @@ if __name__ == "__main__":
             "embeddings": get_embedding(df),
         }
 
-        outputfile = args.outputpath / f"{partnername}.csv"
-        if not outputfile.exists():
-            with open(outputfile, "w") as f:
-                writer = csv.DictWriter(f, fieldnames=results.keys())
-                writer.writeheader()
-                writer.writerow(results)
+        # single file as embeddings exceed 50MB github limit
+        with open(outputfile, "w") as f:
+            writer = csv.DictWriter(f, fieldnames=results.keys())
+            writer.writeheader()
+            writer.writerow(results)
