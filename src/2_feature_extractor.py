@@ -126,7 +126,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
 
             sentiments = []
             for message in sampled_messages:
-                if len(message) > max_length:
+                if len(message) > max_length: # truncate if too long
                     message = message[:max_length]
                 sentiments.append(sentiment_classifier(message)[0]["score"])
             avg = sum(sentiments) / len(sentiments)
@@ -148,7 +148,7 @@ def get_monthly_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) ->
     def get_monthly_user_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) -> list[float]:
         from transformers import pipeline
 
-        toxicity_classifier = pipeline("text-classification", device=get_device(disable_mps=False), model="citizenlab/distilbert-base-multilingual-cased-toxicity", model_kwargs={"cache_dir": weightspath})
+        toxicity_classifier = pipeline("text-classification", device=get_device(disable_mps=False), model="citizenlab/distilbert-base-multilingual-cased-toxicity", model_kwargs={"cache_dir": weightspath}, max_length=512, truncation=True)
 
         monthly_toxicity = []
 
@@ -294,8 +294,8 @@ if __name__ == "__main__":
             "conversation_language": get_language(df),
             "author_name": author_name,
             "partner_name": partnername,
-            **get_monthly_sentiments(df, author_name, sample_size=1_000),
-            **get_monthly_toxicity(df, author_name, sample_size=1_000),
+            **get_monthly_sentiments(df, author_name, sample_size=100), # 100 samples per month (insufficient memory for more)
+            **get_monthly_toxicity(df, author_name, sample_size=100),
             **get_gender_stats(df, author_name),
             "topic_diversity": get_topic_diversity_score(df),
             **get_freq_stats(df, author_name),
