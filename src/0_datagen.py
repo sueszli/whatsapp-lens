@@ -1,10 +1,3 @@
-# use llm to generate data
-# ideally each run of this file should generate a new dataset
-
-# 1) generate dialogue between different people using an llm
-# 2) generate randomly increasing timestamps using a random walk
-
-
 from types import SimpleNamespace
 
 from utils import get_current_dir
@@ -18,3 +11,4 @@ if __name__ == "__main__":
         partner_name="Jane Doe",
         outputpath=get_current_dir().parent / "data" / "synthetic",
     )
+
