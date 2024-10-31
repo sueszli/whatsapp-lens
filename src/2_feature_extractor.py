@@ -1,5 +1,5 @@
+import csv
 import glob
-import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -9,6 +9,7 @@ import emojis
 import numpy as np
 import pandas as pd
 from langdetect import detect
+from tqdm import tqdm
 
 from utils import get_current_dir, get_device, set_seed
 
@@ -20,6 +21,8 @@ os.makedirs(weightspath, exist_ok=True)
 
 
 def preprocess(df: pd.DataFrame) -> pd.DataFrame:
+    print("preprocessing")
+
     df = df.copy()
 
     # type conversion
@@ -63,6 +66,7 @@ def get_author_name(df: pd.DataFrame, path: Path) -> str:
 
 
 def get_language(df: pd.DataFrame) -> str:
+    print("detecting language")
     df = df.copy()
 
     rnd_indices = df.sample(100 if len(df) > 100 else len(df)).index  # random samples
@@ -79,6 +83,8 @@ def get_language(df: pd.DataFrame) -> str:
 
 
 def get_gender_stats(df: pd.DataFrame, authorname: str) -> dict:
+    print("classifying gender")
+
     def get_gender(name: str) -> Optional[str]:
         from transformers import pipeline
 
@@ -96,6 +102,7 @@ def get_gender_stats(df: pd.DataFrame, authorname: str) -> dict:
 
 
 def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) -> dict:
+    print("sentiment analysis")
     df = df.copy()
     df = drop_media(df)
 
@@ -129,6 +136,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
 
 
 def get_monthly_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) -> dict:
+    print("toxicity analysis")
     df = df.copy()
     df = drop_media(df)
 
@@ -162,6 +170,7 @@ def get_monthly_toxicity(df: pd.DataFrame, authorname: str, sample_size: int) ->
 
 
 def get_topic_diversity_score(df: pd.DataFrame) -> float:
+    print("topic modeling")
     from bertopic import BERTopic
     from sentence_transformers import SentenceTransformer
     from sklearn.feature_extraction.text import CountVectorizer
@@ -189,7 +198,20 @@ def get_topic_diversity_score(df: pd.DataFrame) -> float:
     return topic_diversity
 
 
+def get_embedding(df: pd.DataFrame) -> list[list[float]]:
+    print("embedding generation")
+    from sentence_transformers import SentenceTransformer
+
+    df = df.copy()
+    df = drop_media(df)
+    messages = df["message"].tolist()
+    model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", device=get_device(disable_mps=False), cache_folder=weightspath)
+    embeddings = model.encode(messages)
+    return embeddings.tolist()
+
+
 def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
+    print("frequency analysis")
     df = df.copy()
 
     author_messages = df[df["author"] == authorname]
@@ -257,7 +279,7 @@ if __name__ == "__main__":
     os.makedirs(args.outputpath, exist_ok=True)
     os.makedirs(weightspath, exist_ok=True)
 
-    for path in glob.glob(str(args.inputpath / "*.csv")):
+    for path in tqdm(glob.glob(str(args.inputpath / "*.csv"))):
         path = glob.glob(str(args.inputpath / "*.csv"))[0]
 
         df = pd.read_csv(path)
@@ -273,5 +295,13 @@ if __name__ == "__main__":
             **get_gender_stats(df, author_name),
             "topic_diversity": get_topic_diversity_score(df),
             **get_freq_stats(df, author_name),
+            "embeddings": get_embedding(df),
         }
-        print(json.dumps(results, indent=4, ensure_ascii=False))
+
+        with open(args.outputpath / f"results.csv", "w") as f:
+            if os.stat(args.outputpath / f"results.csv").st_size == 0:
+                writer = csv.DictWriter(f, fieldnames=results.keys())
+                writer.writeheader()
+            writer = csv.DictWriter(f, fieldnames=results.keys())
+            writer.writerow(results)
+        print("done")
