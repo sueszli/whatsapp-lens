@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     currtime = datetime.now()
     conversation_history = init_msg
-    store_msg(name_2, init_msg, currtime)
+    store_msg(args.outputpath, name_1, init_msg, currtime)
     for i in tqdm(range(iterations)):
         response = generate_response(model_1, tokenizer_1, conversation_history, persona_2)
         store_msg(args.outputpath, name_1, response, get_next_timestamp(currtime))
