@@ -298,10 +298,10 @@ if __name__ == "__main__":
             "embeddings": get_embedding(df),
         }
 
-        with open(args.outputpath / f"results.csv", "w") as f:
+        with open(args.outputpath / f"results.csv", "a") as f:
             if os.stat(args.outputpath / f"results.csv").st_size == 0:
                 writer = csv.DictWriter(f, fieldnames=results.keys())
                 writer.writeheader()
-            writer = csv.DictWriter(f, fieldnames=results.keys())
+            else:
+                writer = csv.DictWriter(f, fieldnames=results.keys())
             writer.writerow(results)
-        print("done")
