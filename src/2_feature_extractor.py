@@ -110,6 +110,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
         from transformers import pipeline
 
         sentiment_classifier = pipeline("sentiment-analysis", device=get_device(disable_mps=False), model="lxyuan/distilbert-base-multilingual-cased-sentiments-student", model_kwargs={"cache_dir": weightspath})
+        max_length = 512  # maximum length for the model
 
         monthly_sentiments = []
 
@@ -123,7 +124,11 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
             sample_size_adjusted = min(sample_size, len(group))
             sampled_messages = group["message"].sample(n=sample_size_adjusted).tolist()
 
-            sentiments = [sentiment_classifier(message)[0]["score"] for message in sampled_messages]
+            sentiments = []
+            for message in sampled_messages:
+                if len(message) > max_length:
+                    message = message[:max_length]
+                sentiments.append(sentiment_classifier(message)[0]["score"])
             avg = sum(sentiments) / len(sentiments)
             monthly_sentiments.append(avg)
         return monthly_sentiments
@@ -280,26 +285,26 @@ if __name__ == "__main__":
     os.makedirs(weightspath, exist_ok=True)
 
     for path in tqdm(glob.glob(str(args.inputpath / "*.csv"))):
+        print("processing:", Path(path).name, " - length:", len(pd.read_csv(path)))
         df = pd.read_csv(path)
         df = preprocess(df)
         author_name = get_author_name(df, path)
-
+        partnername = df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1]
         results = {
             "conversation_language": get_language(df),
             "author_name": author_name,
-            "partner_name": df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1],
-            **get_monthly_sentiments(df, author_name, sample_size=1_000),
-            **get_monthly_toxicity(df, author_name, sample_size=1_000),
-            **get_gender_stats(df, author_name),
-            "topic_diversity": get_topic_diversity_score(df),
-            **get_freq_stats(df, author_name),
-            "embeddings": get_embedding(df),
+            "partner_name": partnername,
+            # **get_monthly_sentiments(df, author_name, sample_size=1_000),
+            # **get_monthly_toxicity(df, author_name, sample_size=1_000),
+            # **get_gender_stats(df, author_name),
+            # "topic_diversity": get_topic_diversity_score(df),
+            # **get_freq_stats(df, author_name),
+            # "embeddings": get_embedding(df),
         }
 
-        with open(args.outputpath / f"results.csv", "a") as f:
-            if os.stat(args.outputpath / f"results.csv").st_size == 0:
+        outputfile = args.outputpath / f"{partnername}.csv"
+        if not outputfile.exists():
+            with open(outputfile, "w") as f:
                 writer = csv.DictWriter(f, fieldnames=results.keys())
                 writer.writeheader()
-            else:
-                writer = csv.DictWriter(f, fieldnames=results.keys())
-            writer.writerow(results)
+                writer.writerow(results)
