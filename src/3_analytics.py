@@ -1,1 +1,2 @@
-# for this stage use my private and personal data
+# use personal data for final stage
+# then make interactive visualizations for github pages

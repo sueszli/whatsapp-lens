@@ -59,7 +59,7 @@ def validate_csv(path: Path) -> None:
 
 if __name__ == "__main__":
     args = SimpleNamespace(
-        inputpath=get_current_dir().parent / "data" / "robustness",
+        inputpath=get_current_dir().parent / "data" / "personal",
     )
     os.makedirs(args.inputpath, exist_ok=True)
 

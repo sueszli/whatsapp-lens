@@ -273,7 +273,7 @@ def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
 
 if __name__ == "__main__":
     args = SimpleNamespace(
-        inputpath=get_current_dir().parent / "data" / "synthetic",
+        inputpath=get_current_dir().parent / "data" / "personal",
         outputpath=get_current_dir().parent / "data" / "results",
     )
     os.makedirs(args.outputpath, exist_ok=True)

@@ -62,6 +62,7 @@ Given the explorative nature of the project, the extent to which the optional ta
 
 <!-- 
 
+go through assignment to make sure i've covered all requirements. ignore redundant stuff.
 
 deliverables:
 
