@@ -184,23 +184,33 @@ def get_topic_diversity_score(df: pd.DataFrame) -> float:
     df = drop_media(df)
     messages = df["message"].tolist()
 
+    if len(messages) < 10:
+        return 0
+    
+    messages = [msg for msg in messages if isinstance(msg, str) and len(msg.strip()) > 5]
+    if len(messages) < 10:
+        return 0
+
     embedding_model = SentenceTransformer("distiluse-base-multilingual-cased-v2", device=get_device(disable_mps=False), cache_folder=weightspath)
     vectorizer = CountVectorizer(
         min_df=1,  # minimum document frequency
-        max_df=1.0,  # maximum document frequency
+        max_df=0.97,  # maximum document frequency
         ngram_range=(1, 2),  # allow single words and bigrams
     )
     topic_model = BERTopic(
         embedding_model=embedding_model,
         vectorizer_model=vectorizer,
-        min_topic_size=3,  # minimum number of messages in a topic
+        min_topic_size=2,  # minimum number of messages in a topic
         nr_topics="auto",
         language="multilingual",
     )
     topics, probs = topic_model.fit_transform(messages)  # fit
     topic_info = topic_model.get_topic_info()
+    if topic_info.empty or len(topic_info[topic_info["Topic"] != -1]) == 0:
+        return 0
+        
     topic_diversity = len(topic_info[topic_info["Topic"] != -1]) / len(messages)
-    return topic_diversity
+    return min(topic_diversity, 1.0)
 
 
 def get_embedding(df: pd.DataFrame) -> list[list[float]]:
