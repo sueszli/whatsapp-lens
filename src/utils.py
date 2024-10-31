@@ -32,3 +32,16 @@ def get_device(disable_mps=False) -> str:
         return "cuda"
     else:
         return "cpu"
+
+
+def load_data(hf_repo_id: str = "sueszli/whatsapp-lens", local_dir: Path = None):
+    from huggingface_hub import snapshot_download
+
+    dataset = snapshot_download(
+        repo_id=hf_repo_id,
+        repo_type="dataset",
+        local_dir=local_dir,
+        allow_patterns="*.csv",
+        token=True,
+    )
+    return dataset

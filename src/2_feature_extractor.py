@@ -126,7 +126,7 @@ def get_monthly_sentiments(df: pd.DataFrame, authorname: str, sample_size: int) 
 
             sentiments = []
             for message in sampled_messages:
-                if len(message) > max_length: # truncate if too long
+                if len(message) > max_length:  # truncate if too long
                     message = message[:max_length]
                 sentiments.append(sentiment_classifier(message)[0]["score"])
             avg = (sum(sentiments) / len(sentiments)) if (sentiments and len(sentiments) > 0) else 0
@@ -186,7 +186,7 @@ def get_topic_diversity_score(df: pd.DataFrame) -> float:
 
     if len(messages) < 10:
         return 0
-    
+
     messages = [msg for msg in messages if isinstance(msg, str) and len(msg.strip()) > 5]
     if len(messages) < 10:
         return 0
@@ -208,7 +208,7 @@ def get_topic_diversity_score(df: pd.DataFrame) -> float:
     topic_info = topic_model.get_topic_info()
     if topic_info.empty or len(topic_info[topic_info["Topic"] != -1]) == 0:
         return 0
-        
+
     topic_diversity = len(topic_info[topic_info["Topic"] != -1]) / len(messages)
     return min(topic_diversity, 1.0)
 
@@ -219,10 +219,10 @@ def get_embedding(df: pd.DataFrame) -> list[list[float]]:
 
     df = df.copy()
     df = drop_media(df)
-    messages = df["message"].tolist()
     model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", device=get_device(disable_mps=False), cache_folder=weightspath)
-    embeddings = model.encode(messages)
-    return embeddings.tolist()
+    full_conversation = " ".join(df["message"].tolist())
+    embedding = model.encode(full_conversation)
+    return embedding.tolist()
 
 
 def get_freq_stats(df: pd.DataFrame, authorname: str) -> dict:
@@ -294,25 +294,23 @@ if __name__ == "__main__":
     os.makedirs(args.outputpath, exist_ok=True)
     os.makedirs(weightspath, exist_ok=True)
 
-
     for path in tqdm(glob.glob(str(args.inputpath / "*.csv"))):
-        print("processing:", Path(path).name, " - length:", len(pd.read_csv(path)))
+        print(f"processing: {Path(path).name} - length: {len(pd.read_csv(path))}")
         df = pd.read_csv(path)
         df = preprocess(df)
         author_name = get_author_name(df, path)
         partnername = df["author"].unique()[0] if df["author"].unique()[0] != author_name else df["author"].unique()[1]
 
         # caching
-        outputfile = args.outputpath / f"{partnername}.csv"
-        if outputfile.exists():
-            print("file exists, skipping")
-            continue
+        # outputfile = args.outputpath / f"{partnername}.csv"
+        # if outputfile.exists():
+        #     continue
 
         results = {
             "conversation_language": get_language(df),
             "author_name": author_name,
             "partner_name": partnername,
-            **get_monthly_sentiments(df, author_name, sample_size=100), # 100 samples per month (insufficient memory for more)
+            **get_monthly_sentiments(df, author_name, sample_size=100),  # 100 samples per month (insufficient memory for more)
             **get_monthly_toxicity(df, author_name, sample_size=100),
             **get_gender_stats(df, author_name),
             "topic_diversity": get_topic_diversity_score(df),
@@ -320,8 +318,9 @@ if __name__ == "__main__":
             "embeddings": get_embedding(df),
         }
 
-        # single file as embeddings exceed 50MB github limit
-        with open(outputfile, "w") as f:
+        outputfile = args.outputpath / "result.csv"
+        with open(outputfile, "a", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=results.keys())
-            writer.writeheader()
+            if outputfile.stat().st_size == 0:
+                writer.writeheader()
             writer.writerow(results)
