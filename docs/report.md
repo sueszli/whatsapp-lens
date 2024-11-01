@@ -137,6 +137,63 @@ To ensure data integrity and consistency, the script includes a `validate_csv` f
 
 The main execution block of the script processes all text files in a specified directory, converting each one to a CSV file. This batch processing capability allows for efficient handling of multiple chat export files, which is particularly useful for analyzing conversations across different groups or time periods.
 
+### Feature Engineering
+
+The feature extraction module implements a comprehensive set of analyses on WhatsApp chat data through several key components.
+
+The preprocessing function handles the initial data cleaning by converting timestamps to datetime format, categorizing authors, and standardizing media message placeholders. It also removes server messages and poll content to ensure clean data for analysis.
+
+The language detection functionality samples 100 random messages and uses majority voting to determine whether the conversation is in English or German. We only permit the analysis of English and German conversations in our prototype, as these are the languages most commonly used in the author's chat data.
+
+For demographic analysis, the code implements gender classification using a pre-trained transformer model to identify the gender of chat participants based on their names. This model is fine-tuned version of DistilBERT, trained on a large corpus of names and achieves a test accuracy of 100% on a balanced dataset.
+
+The sentiment and toxicity analysis components process messages on a monthly basis, using state-of-the-art transformer models. The sentiment analyzer generates scores indicating the emotional tone of messages, while the toxicity classifier identifies potentially harmful content. Both analyses use sampling to handle large datasets efficiently.
+
+Topic diversity is measured using BERTopic, which combines BERT embeddings with traditional clustering techniques. The implementation uses a multilingual sentence transformer model to generate embeddings and includes parameters for minimum topic size and document frequency thresholds.
+
+The frequency statistics component provides detailed interaction metrics including message ratios, word counts, media usage, emoji frequency, and URL sharing patterns. It also analyzes conversation patterns by measuring response times, conversation initiations, and active hours for both participants. The code defines conversations using a two-hour threshold between messages. This segment is the most sophisticated part of the feature engineering module, as it requires extensive data processing and analysis to extract meaningful insights from the chat data.
+
+Message embeddings are generated using a multilingual MiniLM model, creating vector representations of the entire conversation that can be used for further analysis or visualization.
+
+The implementation makes effective use of modern NLP libraries and handles multilingual content appropriately, while maintaining efficiency through sampling and proper resource management. The code includes appropriate error handling and parameter validation to ensure robust processing of various chat formats and content types.
+
+Here's an explanation of each feature in the result schema:
+
+• `conversation_language`: The primary language detected in the chat (either 'en' or 'de')
+• `author_name`: The name of the main chat participant being analyzed
+• `partner_name`: The name of the other chat participant
+• `author_monthly_sentiments`: Monthly sentiment scores of the author's messages (0-1 scale)
+• `partner_monthly_sentiments`: Monthly sentiment scores of the partner's messages (0-1 scale)
+• `author_monthly_toxicity`: Monthly toxicity levels in the author's messages (0-1 scale)
+• `partner_monthly_toxicity`: Monthly toxicity levels in the partner's messages (0-1 scale)
+• `author_gender`: Predicted gender of the author ('m' or 'f')
+• `partner_gender`: Predicted gender of the partner ('m' or 'f')
+• `topic_diversity`: Score indicating the variety of conversation topics (0-1 scale)
+• `total_messages`: Total number of messages in the conversation
+• `author_message_ratio`: Proportion of messages sent by the author
+• `partner_message_ratio`: Proportion of messages sent by the partner
+• `author_avg_word_count`: Average number of words per message from the author
+• `partner_avg_word_count`: Average number of words per message from the partner
+• `author_media_count`: Number of media messages sent by the author
+• `partner_media_count`: Number of media messages sent by the partner
+• `author_emoji_count`: Number of emojis used by the author
+• `partner_emoji_count`: Number of emojis used by the partner
+• `author_url_count`: Number of URLs shared by the author
+• `partner_url_count`: Number of URLs shared by the partner
+• `author_vocabulary_size`: Number of unique words used by the author
+• `partner_vocabulary_size`: Number of unique words used by the partner
+• `total_conversations`: Number of distinct chat sessions (separated by 2+ hours of inactivity)
+• `total_duration_days`: Total timespan of the conversation in days
+• `author_message_freq_s`: Average time between author's messages in seconds
+• `partner_message_freq_s`: Average time between partner's messages in seconds
+• `author_response_time_s`: Average time taken by author to respond in seconds
+• `partner_response_time_s`: Average time taken by partner to respond in seconds
+• `author_avg_active_time`: Average hour of the day when author is most active (0-23)
+• `partner_avg_active`: Average hour of the day when partner is most active (0-23)
+• `author_conversation_initiations`: Number of conversations started by the author
+• `partner_conversation_initiations`: Number of conversations started by the partner
+• `embeddings`: Vector representation of the entire conversation for semantic analysis
+
 # Results
 
 $\textcolor{gray}{\text{Assignment 3 - Deliver}}$
