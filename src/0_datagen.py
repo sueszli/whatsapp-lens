@@ -1,6 +1,6 @@
 """
 synthetic data generation works great, if you have sufficient compute.
-this is just a demo, small enough to run on a laptop.
+these models are small enough to run on a laptop - but they still generate reasonable responses.
 """
 
 import os

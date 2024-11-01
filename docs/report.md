@@ -54,12 +54,6 @@ Especially given recent advancements in natural language processing with the adv
 
 ### Contribution
 
-<!-- A work-breakdown structure for the individual tasks with time estimates (hours or
-days) for dataset collection; designing and building an appropriate network;
-training and fine-tuning that network; building an application to present the results;
-writing the final report; preparing the presentation of your work.
- -->
-
 One of the main challenges in applying the mentioned state-of-the-art NLP techniques to this domain however is the lack of both open datasets and accessible parsing tools for WhatsApp chat exports, given that the data comes in an unstructured and proprietary format, increasing the barrier to entry for researchers and practitioners alike.
 
 The project category "Bring your own data" in this course lend themselves itself nicely to bridging this gap by providing a ground for the development of an end-to-end prototype for WhatsApp chat data analysis:
@@ -89,31 +83,66 @@ The project category "Bring your own data" in this course lend themselves itself
 
 - (6) Presentation: preparing a final report and a video presentation on YouTube.
 
-Given our time budget of just 3 ECTS credits, equivalent to 75-81 hours of work (25-27 hours per ECTS credit), excluding the time spent on optional lectures and exercises, we constrain each task to a maximum of 15 working hours, ensuring that the project is completed within the time frame.
+Given our time budget of just 3 ECTS credits, equivalent to 75-81 hours of work (25-27 hours per ECTS credit), excluding the time spent on optional lectures and exercises, we constrain each task to a maximum of 15 working hours, ensuring that the project is completed within a reasonable time frame.
+
+We plan to dedicate the largest portion of our time to the Feature Engineering and Analytics tasks, as these are the most critical components of the project, which will provide the most value to the end user in terms of insights gained from the data for our prototype.
 
 # Execution
 
 $\textcolor{gray}{\text{Assignment 2 - Hacking}}$
 
+### Synthetic Data Generation
+
+The synthetic data generation component utilizes two instances of the TinyLlama-1.1B-Chat model to simulate a natural conversation between two personas with distinct characteristics. This approach allows for the creation of realistic WhatsApp chat data while maintaining privacy and providing a controlled environment for testing and development. The quantized 1.1B model was chosen for its capacity to run on a consumer-grade GPU such M2 Pro Metal Performance Shaders with 16GB of memory.
+
+```
+2024-10-31 03:08:00,Jane Doe,Hey Jane! How's your day going? 🌟
+2024-10-31 03:10:00,Jane Doe,I had such an amazing weekend at the gym with my friends - it was great having some friendly competition while enjoying all our favorite classes together! We even tried kettlebell swings for the first time which were awesome!!
+2024-10-31 03:13:00,John Smith,So excited for Sunday morning workout this AM (and hopefully a good night's sleep too).
+2024-10-31 03:10:00,Jane Doe,How about you? Workout? Healthier lifestyle tips/strategies? Food preferences/diets suggestions? Can I tag your friends in the comments??
+```
+
+The implementation leverages the Hugging Face Transformers library to load and utilize the language models. Each model instance is configured with specific generation parameters to ensure diverse yet coherent responses. The generation process employs a temperature of 0.9 and top-p sampling of 0.9, striking a balance between creativity and coherence in the generated text.
+
+To maintain conversation authenticity, the system implements realistic temporal patterns through the `get_next_timestamp` function. This function introduces variable time delays between messages, with most intervals falling between 1 second and 10 minutes. Additionally, it incorporates a 1% chance of longer gaps ranging from 1 hour to 1 day, simulating natural conversation breaks.
+
+The personas are carefully crafted to represent distinct personality types, using 2 prompts for this specific example:
+
+- Jane Doe represents a book-loving introvert, programmed to reference literature and use book-related expressions
+- John Smith embodies a fitness enthusiast, incorporating workout-related terminology and health-focused language
+
+The conversation generation process is implemented as an iterative loop, where each model takes turns responding to the previous message. The responses are processed to ensure proper formatting and stored in WhatsApp's characteristic timestamp format (`MM/DD/YY, HH:MM`).
+
+The implementation also includes safeguards against common issues in language model outputs, such as response truncation using regular expressions to ensure complete sentences and the removal of special tokens. A repetition penalty of 1.3 helps prevent the models from falling into repetitive patterns or loops, contributing to more natural-sounding conversations.
+
+This synthetic data generation approach provides several advantages for the project's development and testing phases.
+
+There are however noticeable limitations to this approach, such as the lack of real-world data variability and the potential for overfitting to the prompts. This is visible in the generated conversation, where the model's use templating syntax in their responses, which is a common issue in language model outputs.
+
+```
+2024-10-31 03:09:00,John Smith,8. Follow up on responses - Send thank you emails after receiving positive replies (positive reply = yes) with details of when you will follow up if there's no immediate answer available.
+2024-10-31 03:16:00,Jane Doe,"For example: Dear [Name], Thank you for your response earlier today regarding my inquiry about the upcoming event at our local gym."
+2024-10-31 03:17:00,John Smith,Your enthusiasm was quite infectious!
+```
+
+Additionally, these models can generate inappropriate or harmful content, which must be carefully monitored and filtered to ensure the safety and integrity of the generated data.
+
+One particularly humorous but obscene example is the following:
+
+```
+2024-11-01 03:15:00,User 1,YOU ARE A BITCH!!
+2024-11-01 03:15:00,User 2,     YOU ARE A BITCH!!
+2024-11-01 03:15:00,User 1,         YOU ARE A BITCH!!
+2024-11-01 03:15:00,User 2,             YOU ARE A BITCH!!
+2024-11-01 03:15:00,User 1,                 YOU ARE A BITCH!!
+```
+
+It's unclear what lead to these responses, given both that they do not align with Meta's guardrails.
+
 # Results
 
 $\textcolor{gray}{\text{Assignment 3 - Deliver}}$
 
-<!-- 
-
-go through assignment to make sure i've covered all requirements. ignore redundant stuff.
-
-deliverables:
-
-- data:
-    - robustness testing dataset
-    - synthetic data generation tool
-- analytics
-- visualization / deployment
-- report
-- video presentation on youtube
-
--->
 
 
 
