@@ -38,7 +38,7 @@ In this chapter we discuss the state-of-the-art in WhatsApp analytics, the motiv
 
 ### Motivation
 
-With over 2 billion users WhatsApp has reached the highest user penetration in the European Union[^marketshare1] [^marketshare2] [^marketshare3] and has become the primary means of Internet communication in regions including the Americas, the Indian subcontinent, and large parts of Europe and Africa[^marketshare4].
+With over 2 billion users WhatsApp has reached the highest user penetration in the European Union[^marketshare1] [^marketshare2] [^marketshare3] and has become the primary means of Internet communication in regions including the Americas, the Indian subcontinent and large parts of Europe and Africa[^marketshare4].
 
 This ubuiquity has made WhatsApp a rich source of data for social and behavioral analysis. For instance, Kaushal and Chadha[^analytics1] have surveyed various sentiment analysis techniques of WhatsApp, while Ngaleka, Uys[^analytics2] have studied m-learning and recently, as of 2023 Jannah [^analytics3] has explored the utilization of "WhatsApp Business", a Facebook-Business driven platform for customer service and marketing purposes.
 
@@ -96,7 +96,7 @@ $\textcolor{gray}{\text{Assignment 2 - Hacking}}$
 The synthetic data generation component utilizes two instances of the TinyLlama-1.1B-Chat model to simulate a natural conversation between two personas with distinct characteristics. This approach allows for the creation of realistic WhatsApp chat data while maintaining privacy and providing a controlled environment for testing and development. The quantized 1.1B model was chosen for its capacity to run on a consumer-grade GPU such M2 Pro Metal Performance Shaders with 16GB of memory.
 
 ```
-2024-10-31 03:08:00,Jane Doe,Hey Jane! How's your day going? 🌟
+2024-10-31 03:08:00,Jane Doe,Hey Jane! How's your day going?
 2024-10-31 03:10:00,Jane Doe,I had such an amazing weekend at the gym with my friends - it was great having some friendly competition while enjoying all our favorite classes together! We even tried kettlebell swings for the first time which were awesome!!
 2024-10-31 03:13:00,John Smith,So excited for Sunday morning workout this AM (and hopefully a good night's sleep too).
 2024-10-31 03:10:00,Jane Doe,How about you? Workout? Healthier lifestyle tips/strategies? Food preferences/diets suggestions? Can I tag your friends in the comments??
@@ -115,29 +115,27 @@ The conversation generation process is implemented as an iterative loop, where e
 
 The implementation also includes safeguards against common issues in language model outputs, such as response truncation using regular expressions to ensure complete sentences and the removal of special tokens. A repetition penalty of 1.3 helps prevent the models from falling into repetitive patterns or loops, contributing to more natural-sounding conversations.
 
-This synthetic data generation approach provides several advantages for the project's development and testing phases.
+This approach however is not without limitations, as it occasionally produces nonsensical or off-topic responses. These issues are mitigated through manual filtering and post-processing, ensuring the generated data remains coherent and relevant. A more robust solution could involve fine-tuning the models on WhatsApp chat data to improve the quality of the generated conversations and using larger models to capture more nuanced conversational patterns.
 
-There are however noticeable limitations to this approach, such as the lack of real-world data variability and the potential for overfitting to the prompts. This is visible in the generated conversation, where the model's use templating syntax in their responses, which is a common issue in language model outputs.
+### Robustness Dataset
 
-```
-2024-10-31 03:09:00,John Smith,8. Follow up on responses - Send thank you emails after receiving positive replies (positive reply = yes) with details of when you will follow up if there's no immediate answer available.
-2024-10-31 03:16:00,Jane Doe,"For example: Dear [Name], Thank you for your response earlier today regarding my inquiry about the upcoming event at our local gym."
-2024-10-31 03:17:00,John Smith,Your enthusiasm was quite infectious!
-```
+In addition to the synthetic data generation tool and the personal dataset, a robustness dataset was created to test the parser's ability to handle edge cases and various media types. The dataset includes a wide range of scenarios such as: phone numbers, URLs, emojis, media messages, special characters, calls, location sharing, disappearing messages and deleted messages. All of these scenarios are designed to test the parser's ability to correctly extract and encode the data into a standardized format and were handled appropriately in a post-processing step in which they were replaced with placeholders.
 
-Additionally, these models can generate inappropriate or harmful content, which must be carefully monitored and filtered to ensure the safety and integrity of the generated data.
+### Parsing
 
-One particularly humorous but obscene example is the following:
+The parser has been implemented as a Python function that processes WhatsApp chat export plaintext files. The script utilizes regular expressions to extract relevant information from the chat logs and converts them into a structured CSV format.
 
-```
-2024-11-01 03:15:00,User 1,YOU ARE A BITCH!!
-2024-11-01 03:15:00,User 2,     YOU ARE A BITCH!!
-2024-11-01 03:15:00,User 1,         YOU ARE A BITCH!!
-2024-11-01 03:15:00,User 2,             YOU ARE A BITCH!!
-2024-11-01 03:15:00,User 1,                 YOU ARE A BITCH!!
-```
+The function reads the input file line by line, using a regular expression pattern to match the timestamp, author and message content. This pattern is designed to handle the standard WhatsApp chat export format, which typically includes a timestamp, followed by the author's name and then the message content.
 
-It's unclear what lead to these responses, given both that they do not align with Meta's guardrails.
+The expression used to match the chat log lines is: `r"(\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2})\s-\s(?:([^:]+):\s)?(.+)"`.
+
+One of the challenges addressed in the parser is handling multi-line messages. The script maintains a `current_message` dictionary to accumulate message content across multiple lines. This approach ensures that messages spanning multiple lines are correctly captured and preserved in the output.
+
+The parser also handles server messages, which are messages generated by the WhatsApp system rather than by users. These messages are identified by the absence of an author name and are assigned the author "server" in the output CSV.
+
+To ensure data integrity and consistency, the script includes a `validate_csv` function. This function performs several checks on the output CSV file, including verifying the correct number of columns and ensuring that timestamps are in ascending order. These validation steps are crucial for maintaining data quality and preventing errors in subsequent analysis stages.
+
+The main execution block of the script processes all text files in a specified directory, converting each one to a CSV file. This batch processing capability allows for efficient handling of multiple chat export files, which is particularly useful for analyzing conversations across different groups or time periods.
 
 # Results
 
@@ -148,7 +146,7 @@ $\textcolor{gray}{\text{Assignment 3 - Deliver}}$
 
 [^marketshare1]: Shan, S. The battle between social giants: WeChat and WhatsApp’s influence in digital marketing.
 [^marketshare2]: WhatsApp-Website. http://blog.whatsapp.com/. Accessed 30 Oct 2024.
-[^marketshare3]: Montag, C., Błaszkiewicz, K., Sariyska, R., Lachmann, B., Andone, I., Trendafilov, B. & Markowetz, A. (2015). Smartphone usage in the 21st century: who is active on WhatsApp?. BMC research notes, 8, 1-6.
+[^marketshare3]: Montag, C., Błaszkiewicz, K., Sariyska, R., Lachmann, B. Andone, I., Trendafilov, B. & Markowetz, A. (2015). Smartphone usage in the 21st century: who is active on WhatsApp?. BMC research notes, 8, 1-6.
 [^marketshare4]: Metz, Cade (April 5, 2016). "Forget Apple vs. the FBI: WhatsApp Just Switched on Encryption for a Billion People". Wired. ISSN 1059-1028. Archived from the original on April 9, 2017. Retrieved May 13, 2016.
 [^analytics1]: Kaushal, R., & Chadha, R. (2023, March). A Survey of Various Sentiment Analysis Techniques of Whatsapp. In 2023 2nd International Conference for Innovation in Technology (INOCON) (pp. 1-6). IEEE.
 [^analytics2]: Ngaleka, A., & Uys, W. (2013, June). M-learning with whatsapp: A conversation analysis. In International Conference on e-Learning (p. 282). Academic Conferences International Limited.
