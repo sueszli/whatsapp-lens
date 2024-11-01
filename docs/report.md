@@ -26,7 +26,7 @@ header-includes:
 
 \vspace{3em}
 
-![Latent Representation Clustering of WhatsApp Conversations via PCA](docs/assets/void.png){ width=100% }
+![Latent Representation Clustering of WhatsApp Conversations via PCA](docs/assets/void.png){ width=80% }
 
 \newpage
 
